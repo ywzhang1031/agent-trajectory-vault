@@ -26,8 +26,15 @@
 
 ## 常用命令
 
+当前可运行：
+
 ```bash
 PYTHONPATH=src python3 -m unittest discover tests
+```
+
+后续任务实现后可用：
+
+```bash
 PYTHONPATH=src python3 scripts/weekly_update.py --dry-run
 PYTHONPATH=src python3 scripts/validate_dataset.py
 PYTHONPATH=src python3 scripts/build_training_views.py

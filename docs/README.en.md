@@ -14,8 +14,15 @@ The first version targets a private GitHub repository. Public release requires a
 
 ## Commands
 
+Currently available:
+
 ```bash
 PYTHONPATH=src python3 -m unittest discover tests
+```
+
+Available after later tasks:
+
+```bash
 PYTHONPATH=src python3 scripts/weekly_update.py --dry-run
 PYTHONPATH=src python3 scripts/validate_dataset.py
 PYTHONPATH=src python3 scripts/build_training_views.py
