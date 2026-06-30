@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from datetime import datetime, timezone
 from typing import Any
 
@@ -48,7 +49,7 @@ def utc_now_iso() -> str:
 
 
 def stable_id(*parts: str, prefix: str = "traj") -> str:
-    normalized = "\x1f".join(str(part) for part in parts)
+    normalized = json.dumps([str(part) for part in parts], ensure_ascii=False, separators=(",", ":"))
     digest = hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:24]
     return f"{prefix}_{digest}"
 

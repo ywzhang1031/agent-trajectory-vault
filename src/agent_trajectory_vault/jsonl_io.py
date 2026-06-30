@@ -34,8 +34,16 @@ def write_jsonl(path: Path, rows: Iterable[dict[str, Any]]) -> None:
 
 def upsert_jsonl(path: Path, records: Iterable[dict[str, Any]], *, key: str) -> list[dict[str, Any]]:
     existing = read_jsonl(path)
-    order = [row[key] for row in existing if key in row]
-    merged = {row[key]: row for row in existing if key in row}
+    order = []
+    merged = {}
+    for row in existing:
+        if key not in row:
+            raise ValueError(f"existing record missing key: {key}")
+        row_key = row[key]
+        if row_key in merged:
+            raise ValueError(f"duplicate existing key: {row_key}")
+        order.append(row_key)
+        merged[row_key] = row
     for record in records:
         if key not in record:
             raise ValueError(f"record missing key: {key}")
