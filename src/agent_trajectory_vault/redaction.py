@@ -42,6 +42,15 @@ REDACTION_PATTERNS: list[tuple[str, re.Pattern[str], Replacement]] = [
         "<TOKEN>",
     ),
     (
+        "private_repo_url",
+        re.compile(
+            r"(?:https?|ssh)://[^\s\"'<>]*(?:private|internal|company)[^\s\"'<>]*"
+            r"|git@[^\s:\"'<>]+:[^\s\"'<>]*(?:private|internal|company)[^\s\"'<>]*",
+            re.IGNORECASE,
+        ),
+        "<PRIVATE_REPO_URL>",
+    ),
+    (
         "email",
         re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
         "<EMAIL>",
@@ -53,15 +62,6 @@ REDACTION_PATTERNS: list[tuple[str, re.Pattern[str], Replacement]] = [
             r"(?:\s*(?:x|ext\.?)\s*\d{1,6})?(?!\w)"
         ),
         "<PHONE>",
-    ),
-    (
-        "private_repo_url",
-        re.compile(
-            r"(?:https?|ssh)://[^\s\"'<>]*(?:private|internal|company)[^\s\"'<>]*"
-            r"|git@[^\s:\"'<>]+:[^\s\"'<>]*(?:private|internal|company)[^\s\"'<>]*",
-            re.IGNORECASE,
-        ),
-        "<PRIVATE_REPO_URL>",
     ),
     (
         "local_path",

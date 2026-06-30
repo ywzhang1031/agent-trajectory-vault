@@ -49,6 +49,13 @@ after"""
         self.assertIn("<SECRET>", redacted)
         self.assertEqual(summary["ssh_key"], 1)
 
+    def test_redacts_scp_style_private_repo_url_before_email(self):
+        redacted, summary = redact_text("clone git@github.com:acme/internal-tools.git before sharing")
+        self.assertIn("<PRIVATE_REPO_URL>", redacted)
+        self.assertNotIn("git@github.com", redacted)
+        self.assertGreaterEqual(summary["private_repo_url"], 1)
+        self.assertEqual(summary.get("email", 0), 0)
+
 
 if __name__ == "__main__":
     unittest.main()
