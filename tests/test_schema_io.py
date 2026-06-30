@@ -38,6 +38,28 @@ class SchemaIoTests(unittest.TestCase):
         self.assertEqual(row["source_app"], "codex")
         self.assertEqual(row["task"], "Build a validator")
 
+    def test_make_trajectory_accepts_null_failure_type(self):
+        row = make_trajectory(
+            source_app="codex",
+            source_session_id="session-1",
+            source_ref={"path": "<LOCAL_PATH>/rollout.jsonl"},
+            created_at="2026-06-30T00:00:00+00:00",
+            ingested_at="2026-06-30T01:00:00+00:00",
+            task="Build a validator",
+            messages=[{"role": "user", "content": "Build a validator"}],
+            tool_calls=[],
+            observations=[],
+            commands=[],
+            edits=[],
+            outcome="unknown",
+            failure_type=None,
+            privacy_review_status="auto_redacted",
+            redaction_summary={},
+            quality_flags=[],
+        )
+        validate_required_fields(row)
+        self.assertIsNone(row["failure_type"])
+
     def test_jsonl_write_read_and_upsert(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "rows.jsonl"

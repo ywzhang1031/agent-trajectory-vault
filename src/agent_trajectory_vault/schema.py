@@ -63,7 +63,7 @@ def validate_required_fields(row: dict[str, Any]) -> None:
         raise SchemaError(f"invalid outcome: {row['outcome']}")
     if row["privacy_review_status"] not in VALID_REVIEW_STATUS:
         raise SchemaError(f"invalid privacy_review_status: {row['privacy_review_status']}")
-    if row["failure_type"] not in VALID_FAILURE_TYPES:
+    if row["failure_type"] is not None and row["failure_type"] not in VALID_FAILURE_TYPES:
         raise SchemaError(f"invalid failure_type: {row['failure_type']}")
     for list_field in ["messages", "tool_calls", "observations", "commands", "edits", "quality_flags"]:
         if not isinstance(row[list_field], list):
@@ -88,7 +88,7 @@ def make_trajectory(
     commands: list[dict[str, Any]],
     edits: list[dict[str, Any]],
     outcome: str,
-    failure_type: str,
+    failure_type: str | None,
     privacy_review_status: str,
     redaction_summary: dict[str, int],
     quality_flags: list[str],
