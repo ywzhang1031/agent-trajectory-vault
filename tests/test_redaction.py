@@ -46,6 +46,16 @@ class RedactionTests(unittest.TestCase):
         self.assertIn("Cookie: sessionid=<COOKIE>; csrftoken=<COOKIE>", redacted)
         self.assertGreaterEqual(summary["cookie"], 2)
 
+    def test_redacts_generic_cookie_header_value(self):
+        redacted, summary = redact_text("Cookie: sid=secret12345; theme=light")
+        self.assertEqual(redacted, "Cookie: <COOKIE>")
+        self.assertGreaterEqual(summary["cookie"], 1)
+
+    def test_redacts_set_cookie_header_value(self):
+        redacted, summary = redact_text("Set-Cookie: sid=secret12345; Path=/")
+        self.assertEqual(redacted, "Set-Cookie: <COOKIE>")
+        self.assertGreaterEqual(summary["cookie"], 1)
+
     def test_redacts_csrf_and_xsrf_header_values(self):
         text = "X-CSRF-Token: abcdef123456\nxsrf-token=abcdef123456"
         redacted, summary = redact_text(text)
