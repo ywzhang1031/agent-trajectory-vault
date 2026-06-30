@@ -43,7 +43,7 @@ REDACTION_PATTERNS: list[tuple[str, re.Pattern[str], Replacement]] = [
     (
         "cookie",
         re.compile(
-            r"\b((?:set-cookie|cookie)\s*:\s*)(?![^\r\n]*<COOKIE>)[^\r\n]+",
+            r"\b((?:set-cookie|cookie)\s*:\s*)[^\r\n]+",
             re.IGNORECASE,
         ),
         r"\1<COOKIE>",
