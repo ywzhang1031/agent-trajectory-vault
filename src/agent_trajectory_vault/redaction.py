@@ -25,11 +25,29 @@ REDACTION_PATTERNS: list[tuple[str, re.Pattern[str], Replacement]] = [
     (
         "cookie",
         re.compile(
-            r"\b((?:set-cookie|cookie|session(?:id|_id)?|csrf(?:_token)?|xsrf(?:_token)?)\s*[:=]\s*)"
-            r"(\"[^\"]*\"|'[^']*'|[^\s;,]+)",
+            r"\b((?:session(?:id|_id)?|csrftoken|csrf(?:token|_token|-token)?|"
+            r"xsrf(?:token|_token|-token)?|x-csrf-token|x-xsrf-token)\s*[:=]\s*)"
+            r"(\"[^\"]*\"|'[^']*'|[^\s;,<>]+)",
             re.IGNORECASE,
         ),
         r"\1<COOKIE>",
+    ),
+    (
+        "cookie",
+        re.compile(
+            r"\b((?:set-cookie|cookie)\s*=\s*)(\"[^\"]*\"|'[^']*'|[^\s;,<>]+)",
+            re.IGNORECASE,
+        ),
+        r"\1<COOKIE>",
+    ),
+    (
+        "api_key",
+        re.compile(
+            r"\b((?:api[_-]?key|x-api-key)\s*[:=]\s*)"
+            r"(\"[^\"]*\"|'[^']*'|[^\s;,<>]+)",
+            re.IGNORECASE,
+        ),
+        r"\1<API_KEY>",
     ),
     (
         "api_key",
@@ -39,6 +57,11 @@ REDACTION_PATTERNS: list[tuple[str, re.Pattern[str], Replacement]] = [
     (
         "token",
         re.compile(r"\bgh[pousr]_[A-Za-z0-9_]{20,}\b"),
+        "<TOKEN>",
+    ),
+    (
+        "token",
+        re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b"),
         "<TOKEN>",
     ),
     (
@@ -52,7 +75,7 @@ REDACTION_PATTERNS: list[tuple[str, re.Pattern[str], Replacement]] = [
     ),
     (
         "email",
-        re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
+        re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b(?!:[^\s])"),
         "<EMAIL>",
     ),
     (
@@ -65,7 +88,7 @@ REDACTION_PATTERNS: list[tuple[str, re.Pattern[str], Replacement]] = [
     ),
     (
         "local_path",
-        re.compile(r"/(?:Users/evan|private/var/folders)(?:/[^\s\"'<>]*)?"),
+        re.compile(r"/(?:Users/evan|private/var/folders)(?:/[^\s\"'<>]*)?(?<![.,])"),
         "<LOCAL_PATH>",
     ),
 ]

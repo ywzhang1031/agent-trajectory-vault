@@ -28,6 +28,40 @@ class RedactionTests(unittest.TestCase):
         self.assertEqual(redacted["source_ref"]["path"], "<LOCAL_PATH>")
         self.assertGreaterEqual(summary["token"], 1)
 
+    def test_redacts_fine_grained_github_pat(self):
+        token = (
+            "github_pat_11ABCDEF0abcdefghijklmnopqrstuvwxyz_"
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+        )
+        redacted, summary = redact_text(f"token {token}")
+        self.assertNotIn(token, redacted)
+        self.assertIn("<TOKEN>", redacted)
+        self.assertGreaterEqual(summary["token"], 1)
+
+    def test_redacts_cookie_header_values(self):
+        text = "Cookie: sessionid=abcdef123456; csrftoken=qwerty123456"
+        redacted, summary = redact_text(text)
+        self.assertNotIn("abcdef123456", redacted)
+        self.assertNotIn("qwerty123456", redacted)
+        self.assertIn("Cookie: sessionid=<COOKIE>; csrftoken=<COOKIE>", redacted)
+        self.assertGreaterEqual(summary["cookie"], 2)
+
+    def test_redacts_csrf_and_xsrf_header_values(self):
+        text = "X-CSRF-Token: abcdef123456\nxsrf-token=abcdef123456"
+        redacted, summary = redact_text(text)
+        self.assertNotIn("abcdef123456", redacted)
+        self.assertIn("X-CSRF-Token: <COOKIE>", redacted)
+        self.assertIn("xsrf-token=<COOKIE>", redacted)
+        self.assertGreaterEqual(summary["cookie"], 2)
+
+    def test_redacts_generic_api_key_values(self):
+        text = "api_key=abcdef1234567890 and X-API-Key: abcdef1234567890"
+        redacted, summary = redact_text(text)
+        self.assertNotIn("abcdef1234567890", redacted)
+        self.assertIn("api_key=<API_KEY>", redacted)
+        self.assertIn("X-API-Key: <API_KEY>", redacted)
+        self.assertGreaterEqual(summary["api_key"], 2)
+
     def test_redact_record_does_not_mutate_original_record(self):
         record = {
             "messages": [{"role": "user", "content": "email user@example.com"}],
@@ -55,6 +89,18 @@ after"""
         self.assertNotIn("git@github.com", redacted)
         self.assertGreaterEqual(summary["private_repo_url"], 1)
         self.assertEqual(summary.get("email", 0), 0)
+
+    def test_public_scp_style_repo_url_is_not_redacted_as_email(self):
+        text = "clone git@github.com:org/public.git"
+        redacted, summary = redact_text(text)
+        self.assertEqual(redacted, text)
+        self.assertEqual(summary.get("email", 0), 0)
+        self.assertEqual(summary.get("private_repo_url", 0), 0)
+
+    def test_local_path_redaction_preserves_trailing_punctuation(self):
+        redacted, summary = redact_text("open /Users/evan/project/file.py, then continue")
+        self.assertIn("<LOCAL_PATH>, then", redacted)
+        self.assertGreaterEqual(summary["local_path"], 1)
 
 
 if __name__ == "__main__":
