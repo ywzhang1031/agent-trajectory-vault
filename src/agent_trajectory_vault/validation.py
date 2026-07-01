@@ -59,7 +59,11 @@ def _sensitive_categories(value: Any) -> list[str]:
     if isinstance(value, dict):
         categories = []
         seen = set()
-        for item in value.values():
+        for key, item in value.items():
+            for category in _sensitive_categories(str(key)):
+                if category not in seen:
+                    categories.append(category)
+                    seen.add(category)
             for category in _sensitive_categories(item):
                 if category not in seen:
                     categories.append(category)

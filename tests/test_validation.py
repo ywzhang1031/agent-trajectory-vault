@@ -128,6 +128,27 @@ class ValidationTests(unittest.TestCase):
             report = validate_dataset(root)
             self.assertGreaterEqual(report.error_count, 2)
 
+    def test_raw_index_keys_are_scanned_for_unredacted_path(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            _write_empty_dataset_files(root)
+            write_jsonl(root / "data" / "raw_index.jsonl", [{"/Users/evan/.codex/raw.jsonl": "value"}])
+            report = validate_dataset(root)
+            self.assertGreaterEqual(report.error_count, 1)
+            self.assertTrue(any("local_path" in error for error in report.errors))
+
+    def test_nested_keys_are_scanned_for_bearer_tokens(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            _write_empty_dataset_files(root)
+            write_jsonl(
+                root / "data" / "raw_index.jsonl",
+                [{"nested": {"Authorization: Bearer abcdefgh1234": "value"}}],
+            )
+            report = validate_dataset(root)
+            self.assertGreaterEqual(report.error_count, 1)
+            self.assertTrue(any("token" in error for error in report.errors))
+
     def test_validation_reports_missing_required_data_files(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             report = validate_dataset(Path(temp_dir))
