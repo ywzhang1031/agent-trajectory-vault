@@ -26,15 +26,8 @@
 
 ## 常用命令
 
-当前可运行：
-
 ```bash
 PYTHONPATH=src python3 -m unittest discover tests
-```
-
-后续任务实现后可用：
-
-```bash
 PYTHONPATH=src python3 scripts/weekly_update.py --dry-run
 PYTHONPATH=src python3 scripts/validate_dataset.py
 PYTHONPATH=src python3 scripts/build_training_views.py
@@ -47,3 +40,10 @@ PYTHONPATH=src python3 scripts/build_training_views.py
 ## 许可
 
 代码、脚本和文档工具默认使用 MIT License。明确公开或分享的数据使用 `DATA_LICENSE.md` 中的 CC BY 4.0 和 Responsible Use 声明。私有工作数据不会因为仓库存在 license 文件而自动获得公开复用授权。
+
+## 文档
+
+- [Schema](docs/schema.md)
+- [Redaction Policy](docs/redaction_policy.md)
+- [Weekly Pipeline](docs/weekly_pipeline.md)
+- [Private GitHub Upload](docs/github_private_upload.md)

@@ -14,15 +14,8 @@ The first version targets a private GitHub repository. Public release requires a
 
 ## Commands
 
-Currently available:
-
 ```bash
 PYTHONPATH=src python3 -m unittest discover tests
-```
-
-Available after later tasks:
-
-```bash
 PYTHONPATH=src python3 scripts/weekly_update.py --dry-run
 PYTHONPATH=src python3 scripts/validate_dataset.py
 PYTHONPATH=src python3 scripts/build_training_views.py
@@ -31,3 +24,10 @@ PYTHONPATH=src python3 scripts/build_training_views.py
 ## Privacy
 
 Raw unredacted logs, full private source files, and unrevised sensitive content must not be committed. Automated redaction reduces risk but does not replace manual review before any public release.
+
+## Docs
+
+- [Schema](schema.md)
+- [Redaction Policy](redaction_policy.md)
+- [Weekly Pipeline](weekly_pipeline.md)
+- [Private GitHub Upload](github_private_upload.md)
