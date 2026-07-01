@@ -30,11 +30,11 @@ def discover_cursor_sources(root: Path | None = None) -> list[SourceFile]:
         [root]
         if root is not None
         else [
-            Path.home() / ".cursor",
-            Path.home() / "Library" / "Application Support" / "Cursor",
+            Path.home() / ".cursor" / "projects",
+            Path.home() / "Library" / "Application Support" / "Cursor" / "User" / "globalStorage",
         ]
     )
-    return _discover_sources("cursor", roots, ["*.json", "*.jsonl"])
+    return _discover_sources("cursor", roots, ["**/agent-transcripts/**/*.jsonl"])
 
 
 def discover_opencode_sources(root: Path | None = None) -> list[SourceFile]:
@@ -46,4 +46,7 @@ def discover_opencode_sources(root: Path | None = None) -> list[SourceFile]:
             Path.home() / ".local" / "share" / "opencode",
         ]
     )
-    return _discover_sources("opencode", roots, ["*.json", "*.jsonl"])
+    db_sources = _discover_sources("opencode", roots, ["opencode.db"])
+    if db_sources:
+        return db_sources
+    return _discover_sources("opencode", roots, ["storage/session_diff/ses_*.json", "ses_*.json"])

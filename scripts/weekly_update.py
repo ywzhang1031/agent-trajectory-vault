@@ -58,12 +58,26 @@ def _raw_index_record(app: str, source_path: Path, records: int, ingested_at: st
     }
 
 
+def _dedupe_by_key(records: list[dict[str, Any]], key: str) -> list[dict[str, Any]]:
+    order: list[Any] = []
+    merged: dict[Any, dict[str, Any]] = {}
+    for record in records:
+        if key not in record:
+            raise ValueError(f"record missing key: {key}")
+        record_key = record[key]
+        if record_key not in merged:
+            order.append(record_key)
+        merged[record_key] = record
+    return [merged[record_key] for record_key in order]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Import, validate, and report agent trajectories.")
     parser.add_argument("--root", default=".", help="Repository root")
     parser.add_argument("--fixture-root", help="Use fixture transcripts instead of local app discovery")
     parser.add_argument("--apps", default="codex,cursor,opencode", help="Comma-separated source apps")
     parser.add_argument("--dry-run", action="store_true", help="Do not write data files")
+    parser.add_argument("--reset", action="store_true", help="Replace existing data with this import")
     args = parser.parse_args()
 
     root = Path(args.root).resolve()
@@ -81,10 +95,17 @@ def main() -> int:
         raw_index.append(_raw_index_record(app, source_path, len(rows), ingested_at))
 
     existing = read_jsonl(root / "data" / "trajectories.jsonl")
+    imported = _dedupe_by_key(imported, "trajectory_id")
+    raw_index = _dedupe_by_key(raw_index, "source_id")
     merged = existing
     if not args.dry_run:
-        merged = upsert_jsonl(root / "data" / "trajectories.jsonl", imported, key="trajectory_id")
-        upsert_jsonl(root / "data" / "raw_index.jsonl", raw_index, key="source_id")
+        if args.reset:
+            write_jsonl(root / "data" / "trajectories.jsonl", imported)
+            write_jsonl(root / "data" / "raw_index.jsonl", raw_index)
+            merged = imported
+        else:
+            merged = upsert_jsonl(root / "data" / "trajectories.jsonl", imported, key="trajectory_id")
+            upsert_jsonl(root / "data" / "raw_index.jsonl", raw_index, key="source_id")
         sft = build_sft_records(merged)
         dpo = build_dpo_records(merged)
         grpo = build_grpo_rollouts(merged)
@@ -103,7 +124,7 @@ def main() -> int:
         (root / "reports").mkdir(parents=True, exist_ok=True)
         (root / "reports" / "latest.md").write_text(report, encoding="utf-8")
 
-    print(f"dry_run={args.dry_run} imported={len(imported)} existing={len(existing)}")
+    print(f"dry_run={args.dry_run} reset={args.reset} imported={len(imported)} existing={len(existing)}")
     return 0
 
 

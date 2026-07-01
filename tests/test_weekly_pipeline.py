@@ -6,6 +6,7 @@ from pathlib import Path
 
 from agent_trajectory_vault.jsonl_io import read_jsonl
 from agent_trajectory_vault.validation import validate_dataset
+from scripts.weekly_update import _dedupe_by_key
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -40,6 +41,18 @@ def _run_weekly_update(root: Path, *extra_args: str) -> subprocess.CompletedProc
 
 
 class WeeklyPipelineTests(unittest.TestCase):
+    def test_dedupe_by_key_keeps_last_record(self):
+        records = [
+            {"trajectory_id": "same", "value": 1},
+            {"trajectory_id": "other", "value": 2},
+            {"trajectory_id": "same", "value": 3},
+        ]
+
+        self.assertEqual(
+            _dedupe_by_key(records, "trajectory_id"),
+            [{"trajectory_id": "same", "value": 3}, {"trajectory_id": "other", "value": 2}],
+        )
+
     def test_weekly_update_dry_run_on_fixtures(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             work = Path(temp_dir)
@@ -65,6 +78,23 @@ class WeeklyPipelineTests(unittest.TestCase):
             report = (work / "reports" / "latest.md").read_text(encoding="utf-8")
             self.assertIn("Agent Trajectory Vault Report", report)
             self.assertEqual(validate_dataset(work).error_count, 0)
+
+    def test_weekly_update_reset_replaces_existing_rows(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            work = Path(temp_dir)
+            _empty_worktree(work)
+            (work / "data" / "trajectories.jsonl").write_text('{"trajectory_id":"legacy"}\n', encoding="utf-8")
+            (work / "data" / "raw_index.jsonl").write_text('{"source_id":"legacy"}\n', encoding="utf-8")
+
+            result = _run_weekly_update(work, "--reset")
+
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            self.assertIn("reset=True", result.stdout)
+            trajectories = read_jsonl(work / "data" / "trajectories.jsonl")
+            raw_index = read_jsonl(work / "data" / "raw_index.jsonl")
+            self.assertEqual(len(trajectories), 3)
+            self.assertEqual(len(raw_index), 3)
+            self.assertNotIn("legacy", {row.get("trajectory_id") for row in trajectories})
 
 
 if __name__ == "__main__":

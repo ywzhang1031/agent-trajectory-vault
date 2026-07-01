@@ -8,16 +8,45 @@ from agent_trajectory_vault.redaction import redact_record
 from agent_trajectory_vault.schema import make_trajectory, validate_required_fields
 
 
+def _content_to_text(content: Any) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        texts = [
+            item["text"]
+            for item in content
+            if isinstance(item, dict) and isinstance(item.get("text"), str) and item["text"].strip()
+        ]
+        return "\n".join(texts)
+    return ""
+
+
 def _message_from_event(event: dict[str, Any]) -> dict[str, Any] | None:
     role = event.get("role")
     content = event.get("content")
-    if isinstance(role, str) and isinstance(content, str):
-        return {"role": role, "content": content}
+    if content is None and isinstance(event.get("message"), dict):
+        content = event["message"].get("content")
+    text = _content_to_text(content)
+    if isinstance(role, str) and text:
+        return {"role": role, "content": text}
     return None
 
 
 def _tool_call_from_event(event: dict[str, Any]) -> dict[str, Any] | None:
     tool = event.get("tool")
+    if not isinstance(tool, str) and isinstance(event.get("message"), dict):
+        content = event["message"].get("content")
+        if isinstance(content, list):
+            for item in content:
+                if not isinstance(item, dict):
+                    continue
+                name = item.get("name")
+                if isinstance(name, str):
+                    arguments = item.get("input")
+                    if not isinstance(arguments, dict):
+                        arguments = {}
+                    return {"tool": name, "arguments": arguments}
+        return None
     if not isinstance(tool, str):
         return None
     arguments = event.get("arguments")
